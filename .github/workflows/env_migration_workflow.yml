@@ -1,0 +1,115 @@
+name: Migrate Organization-Level Secrets and Variables
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  extract_migration_level:
+    runs-on: ubuntu-latest
+    outputs:
+      migration_level: ${{ steps.extract.outputs.migration_level }}
+    steps:
+      - name: Get Migration Level from Issue Body
+        id: extract
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueBody = context.payload.issue.body;
+            const migrationLevelMatch = issueBody.match(/### Migration Level\s*\n*(.*)/);
+            const migrationLevel = migrationLevelMatch ? migrationLevelMatch[1].trim() : "organization"; // default to organization
+            console.log("Migration Level: ", migrationLevel);
+            core.setOutput("migration_level", migrationLevel);
+      - name: Validate PAT tokens
+        run: |
+          if [[ -z "${{ secrets.SOURCE_TOKEN }}" ]]; then
+            echo "Source Token is missing!"
+            exit 1
+          fi
+          if [[ -z "${{ secrets.TARGET_TOKEN }}" ]]; then
+          echo "Target Token is missing!"
+          exit 1
+          fi
+        shell: bash
+
+  
+  
+  #Job for repo-level migration
+  repo_level_migration:
+    runs-on: ubuntu-latest
+    needs: extract_migration_level
+    if: ${{ needs.extract_migration_level.outputs.migration_level == 'Repository' }}  # Check migration level output
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Set up GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install gh
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Install gh-seva extension
+        run: gh extension install MGMResorts/gh-environments
+        env:
+          GH_TOKEN: ${{ secrets.CLI_TOKEN }}
+
+      - name: Get Issue Body
+        id: issue_body
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueBody = context.payload.issue.body;
+            const sourceOrgMatch = issueBody.match(/### Source Organization\s*\n*(.*)/);
+            const sourceRepoMatch = issueBody.match(/### Source Repository\s*\n*(.*)/);
+            const targetOrgMatch = issueBody.match(/### Target Organization\s*\n*(.*)/);
+            const targetRepoMatch = issueBody.match(/### Target Repository\s*\n*(.*)/);
+
+            const sourceOrg = sourceOrgMatch ? sourceOrgMatch[1].trim() : "Not provided";
+            const sourceRepo = sourceRepoMatch ? sourceRepoMatch[1].trim() : "Not provided";
+            const targetOrg = targetOrgMatch ? targetOrgMatch[1].trim() : "Not provided";
+            const targetRepo = targetRepoMatch ? targetRepoMatch[1].trim() : "Not provided";
+
+            core.setOutput("source_org", sourceOrg);
+            core.setOutput("source_repo", sourceRepo);
+            core.setOutput("target_org", targetOrg);
+            core.setOutput("target_repo", targetRepo);
+
+      - name: Export env details from an org's Repo
+        run: |
+          gh environments list ${{ steps.issue_body.outputs.source_org }} ${{ steps.issue_body.outputs.source_repo }} -o source-env-report.csv -t ${{ secrets.SOURCE_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.SOURCE_TOKEN }}
+
+      - name: Create env's in target repo
+        run: |
+          gh environments create ${{ steps.issue_body.outputs.target_org }} -f source-env-report.csv --token ${{ secrets.TARGET_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.TARGET_TOKEN }}
+
+      - name: Export environment Secrets from a source Repo
+        run: |
+          gh environments secrets list ${{ steps.issue_body.outputs.source_org }} ${{ steps.issue_body.outputs.source_repo }} -o source-env-secrets.csv --token ${{ secrets.SOURCE_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.TARGET_TOKEN }}
+
+      - name: Create environments Secrets in a target Repo
+        run: |
+          gh environments secrets create ${{ steps.issue_body.outputs.target_org }} -f source-env-secrets.csv --token ${{ secrets.TARGET_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.TARGET_TOKEN }}
+          
+      - name: Export env variables from a Repo
+        run: |
+          gh environments variables list ${{ steps.issue_body.outputs.source_org }} ${{ steps.issue_body.outputs.source_repo }} --output-file source-env-variables.csv --token ${{ secrets.SOURCE_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.TARGET_TOKEN }}
+
+      - name: Create env variables in a target Repo
+        run: |
+          gh environments variables create ${{ steps.issue_body.outputs.target_org }} --from-file source-env-variables.csv --token ${{ secrets.TARGET_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.TARGET_TOKEN }}
+      
