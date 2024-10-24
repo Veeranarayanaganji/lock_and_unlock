@@ -48,7 +48,7 @@ jobs:
 
       - name: Lock or Unlock Repository
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
         run: |
           REPO="${{ steps.issue_body.outputs.source_org }}/${{ steps.issue_body.outputs.source_repo }}" # Use extracted outputs
 
