@@ -45,7 +45,13 @@ jobs:
             core.setOutput("source_repo", sourceRepo);
             core.setOutput("target_org", targetOrg);
             core.setOutput("target_repo", targetRepo);
-
+      - name: Validate PAT tokens
+        run: |
+            if [[ -z "${{ secrets.SOURCE_TOKEN }}" ]]; then
+              echo "Source Token is missing!"
+              exit 1
+            fi
+        shell: bash
       - name: Lock or Unlock Repository
         env:
           GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
