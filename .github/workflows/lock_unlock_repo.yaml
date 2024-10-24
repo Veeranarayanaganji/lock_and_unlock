@@ -16,7 +16,7 @@ jobs:
         with:
           script: |
             const issueBody = context.payload.issue.body;
-            const migrationLockMatch = issueBody.match(/### Lock Level\s*\n*(.*)/);
+            const LockLevelMatch = issueBody.match(/### Lock Level\s*\n*(.*)/);
             const LockLevel = LockLevelMatch ? LockLevelMatch[1].trim() : "Lock"; // default to Lock
             console.log("Lock Level: ", LockLevel);
             core.setOutput("Lock_level", LockLevel);
