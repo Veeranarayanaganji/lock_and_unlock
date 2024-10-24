@@ -3,40 +3,65 @@ name: Lock and Unlock Repository
 on:
   issues:
     types: [opened, edited]
-    
-  workflow_dispatch:
-    inputs:
-      action:
-        description: 'Choose action: lock or unlock'
-        required: true
-        default: 'lock'
-        type: choice
-        options:
-          - lock
-          - unlock
 
 jobs:
+  extract_Lock_level:
+    runs-on: ubuntu-latest
+    outputs:
+      lock_and_unlock: ${{ steps.extract.outputs.lock_and_unlock }}
+    steps:
+      - name: Get Lock Level from Issue Body
+        id: extract
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueBody = context.payload.issue.body;
+            const migrationLockMatch = issueBody.match(/### Lock Level\s*\n*(.*)/);
+            const LockLevel = LockLevelMatch ? LockLevelMatch[1].trim() : "Lock"; // default to Lock
+            console.log("Lock Level: ", LockLevel);
+            core.setOutput("Lock_level", LockLevel);
+
   lock_unlock:
     runs-on: ubuntu-latest
     steps:
+      - name: Get Issue Body
+        id: issue_body
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueBody = context.payload.issue.body;
+            const sourceOrgMatch = issueBody.match(/### Source Organization\s*\n*(.*)/);
+            const sourceRepoMatch = issueBody.match(/### Source Repository\s*\n*(.*)/);
+            const targetOrgMatch = issueBody.match(/### Target Organization\s*\n*(.*)/);
+            const targetRepoMatch = issueBody.match(/### Target Repository\s*\n*(.*)/);
+
+            const sourceOrg = sourceOrgMatch ? sourceOrgMatch[1].trim() : "Not provided";
+            const sourceRepo = sourceRepoMatch ? sourceRepoMatch[1].trim() : "Not provided";
+            const targetOrg = targetOrgMatch ? targetOrgMatch[1].trim() : "Not provided";
+            const targetRepo = targetRepoMatch ? targetRepoMatch[1].trim() : "Not provided";
+
+            core.setOutput("source_org", sourceOrg);
+            core.setOutput("source_repo", sourceRepo);
+            core.setOutput("target_org", targetOrg);
+            core.setOutput("target_repo", targetRepo);
+
       - name: Lock or Unlock Repository
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          ACTION="${{ github.event.inputs.action }}"
-          REPO="/ApplicationM01/test" # Replace with your repository name
+          REPO="source_org" # Replace with your repository name
           
-          if [ "$ACTION" == "lock" ]; then
+          if [ "$Lock_level" == "lock" ]; then
             echo "Locking the repository..."
             curl -X PUT -H "Authorization: token $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/repos/$REPO/lock"
-          elif [ "$ACTION" == "unlock" ]; then
+          elif [ "$Lock_level" == "unlock" ]; then
             echo "Unlocking the repository..."
             curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/repos/$REPO/lock"
           else
-            echo "Invalid action: $ACTION"
+            echo "Invalid action: $Lock_level"
             exit 1
           fi
