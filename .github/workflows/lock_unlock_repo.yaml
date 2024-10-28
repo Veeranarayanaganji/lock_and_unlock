@@ -67,15 +67,4 @@ jobs:
                   -d '{"archived": true}'
         continue-on-error: false
 
-      - name: Unlock Source Repository
-        env:
-              GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
-        run: |
-              curl -X PATCH \
-                -H "Authorization: token $GITHUB_TOKEN" \
-                -H "Accept: application/vnd.github.v3+json" \
-                    https://api.github.com/repos/${{
-                    steps.issue_body.outputs.source_org }}/${{ steps.issue_body.outputs.source_repo }} \
-                -d '{"archived": false}'
-        continue-on-error: true
 
