@@ -56,7 +56,6 @@ jobs:
         shell: bash
       
       - name: Lock Source Repository
-        if: contains(github.event.issue.body, 'lock_level'== 'lock')
         env:
             GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
         run: |
@@ -70,7 +69,6 @@ jobs:
 
   
       - name: Unlock Source Repository
-        if: contains(github.event.issue.body, 'lock_level'== 'unlock')
         env:
               GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
         run: |
