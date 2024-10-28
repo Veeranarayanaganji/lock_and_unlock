@@ -16,7 +16,7 @@ jobs:
         with:
           script: |
             const issueBody = context.payload.issue.body;
-            const LockLevelMatch = issueBody.match(/### lock_and_unlock\s*\n*(.*)/);
+            const LockLevelMatch = issueBody.match(/### lock_level \s*\n*(.*)/);
             const LockLevel = LockLevelMatch ? LockLevelMatch[1].trim() : "lock"; // default to lock
             console.log("Lock Level: ", LockLevel);
             core.setOutput("lock_level", LockLevel.toLowerCase()); // Normalize to lowercase
