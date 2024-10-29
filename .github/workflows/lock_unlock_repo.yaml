@@ -55,28 +55,48 @@ jobs:
             fi
         shell: bash
       
-      - name: Lock Source Repository
+      - name: Lock or Unlock Repository
         env:
-            GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
         run: |
-            curl -X PATCH \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Accept: application/vnd.github.v3+json" \
-                  https://api.github.com/repos/${{
-                  steps.issue_body.outputs.source_org }}/${{ steps.issue_body.outputs.source_repo }} \
-                  -d '{"archived": true}'
-        continue-on-error: false
+          REPO="${{ steps.issue_body.outputs.source_org }}/${{ steps.issue_body.outputs.source_repo }}"
+          if [ "${{ needs.extract_Lock_level.outputs.lock_level }}" == "lock" ]; then
+            echo "Locking the repository..."
+            curl -X PUT -H "Authorization: token $GITHUB_TOKEN" \
+                 -H "Accept: application/vnd.github.v3+json" \
+                 "https://api.github.com/repos/Veeranarayanaganji/$REPO/lock"
+          elif [ "${{ needs.extract_Lock_level.outputs.lock_level }}" == "unlock" ]; then
+            echo "Unlocking the repository..."
+            curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+                 -H "Accept: application/vnd.github.v3+json" \
+                 "https://api.github.com/repos/Veeranarayanaganji/$REPO/lock"
+          else
+            echo "Invalid action: ${{ needs.extract_Lock_level.outputs.lock_level }}"
+            exit 1
+          fi
+
+      # - name: Lock Source Repository
+      #   env:
+      #       GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
+      #   run: |
+      #       curl -X PATCH \
+      #         -H "Authorization: token $GITHUB_TOKEN" \
+      #         -H "Accept: application/vnd.github.v3+json" \
+      #             https://api.github.com/repos/${{
+      #             steps.issue_body.outputs.source_org }}/${{ steps.issue_body.outputs.source_repo }} \
+      #             -d '{"archived": true}'
+      #   continue-on-error: false
 
   
-      - name: Unlock Source Repository
-        env:
-              GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
-        run: |
-              curl -X PATCH \
-                -H "Authorization: token $GITHUB_TOKEN" \
-                -H "Accept: application/vnd.github.v3+json" \
-                    https://api.github.com/repos/${{
-                    steps.issue_body.outputs.source_org }}/${{ steps.issue_body.outputs.source_repo }} \
-                -d '{"archived": false}'
-        continue-on-error: false
+      # - name: Unlock Source Repository
+      #   env:
+      #         GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
+      #   run: |
+      #         curl -X PATCH \
+      #           -H "Authorization: token $GITHUB_TOKEN" \
+      #           -H "Accept: application/vnd.github.v3+json" \
+      #               https://api.github.com/repos/${{
+      #               steps.issue_body.outputs.source_org }}/${{ steps.issue_body.outputs.source_repo }} \
+      #           -d '{"archived": false}'
+      #   continue-on-error: false
 
