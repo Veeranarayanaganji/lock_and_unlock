@@ -54,39 +54,42 @@ jobs:
               exit 1
             fi
         shell: bash
+      - name: Manage Issues with Configurable Token
+ 
+on:
+  workflow_dispatch:
+    inputs:
+      organization:
+        description: 'Select organization to use'
+        required: true
+ 
+jobs:
+  manage_issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Organization Token
+        id: set_token
+        run: |
+          if [ "${{ github.event.inputs.organization }}" == "org_a" ]; then
+            echo "ORG_TOKEN=${{ secrets.ORG_TOKEN_A }}" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.organization }}" == "org_b" ]; then
+            echo "ORG_TOKEN=${{ secrets.ORG_TOKEN_B }}" >> $GITHUB_ENV
+          else
+            echo "Invalid organization selected."
+            exit 1
+          fi
+ 
+      - name: Manage Issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
+          ORG_TOKEN: ${{ env.SOURCE_ORG_TOKEN }}
+        run: |
+          # Example command to create an issue or perform an action
+          echo "Using token for ${{ github.event.inputs.organization }}"
+          # Use ORG_TOKEN for your IssueOps actions here
+          # e.g., curl to create an issue
+          # curl -X POST -H "Authorization: token $SOURCE_ORG_TOKEN" \
+          #      -d '{"title": "New Issue", "body": "Issue created using configurable token."}' \
+          #      "https://api.github.com/repos/owner/repo/issues"
       
-
-      - name: Create lock flag based on migration type
-        uses: actions/github-script@v6
-        id: lock-flag
-        with:
-          result-encoding: string
-          script: |
-            if: ${{ steps.issue_body.outputs.locksourcerepo }} == 'yes'
-                return '${{ needs.prepare.outputs.migration-type }}' === 'Production' ? '--lock-source-repo' : ''
-
-      # - name: Lock Source Repository
-      #   env:
-      #       GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
-      #   run: |
-      #       curl -X PATCH \
-      #         -H "Authorization: token $GITHUB_TOKEN" \
-      #         -H "Accept: application/vnd.github.v3+json" \
-      #             https://api.github.com/repos/${{
-      #             steps.issue_body.outputs.source_org }}/${{ steps.issue_body.outputs.source_repo }} \
-      #             -d '{"archived": true}'
-      #   continue-on-error: false
-
-  
-      # - name: Unlock Source Repository
-      #   env:
-      #         GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
-      #   run: |
-      #         curl -X PATCH \
-      #           -H "Authorization: token $GITHUB_TOKEN" \
-      #           -H "Accept: application/vnd.github.v3+json" \
-      #               https://api.github.com/repos/${{
-      #               steps.issue_body.outputs.source_org }}/${{ steps.issue_body.outputs.source_repo }} \
-      #           -d '{"archived": false}'
-      #   continue-on-error: false
-
+      
