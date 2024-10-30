@@ -70,9 +70,9 @@ jobs:
       - name: Set Organization Token
         id: set_token
         run: |
-          if [ "${{ github.event.inputs.organization }}" == "org_a" ]; then
+          if [ "${{ github.event.inputs.organization }}" == "mgmri-dge" ]; then
             echo "ORG_TOKEN=${{ secrets.ORG_TOKEN_A }}" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.organization }}" == "org_b" ]; then
+          elif [ "${{ github.event.inputs.organization }}" == "mgmri-commerce" ]; then
             echo "ORG_TOKEN=${{ secrets.ORG_TOKEN_B }}" >> $GITHUB_ENV
           else
             echo "Invalid organization selected."
@@ -82,7 +82,8 @@ jobs:
       - name: Manage Issues
         env:
           GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
-          ORG_TOKEN: ${{ env.SOURCE_ORG_TOKEN }}
+          ORG_TOKEN: ${{ secrets.SOURCE_ORG_TOKEN }}
+          #ORG_TOKEN: ${{ env.SOURCE_ORG_TOKEN }}
         run: |
           # Example command to create an issue or perform an action
           echo "Using token for ${{ github.event.inputs.organization }}"
