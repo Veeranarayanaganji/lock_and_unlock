@@ -55,17 +55,44 @@ jobs:
             fi
         shell: bash
       
-
-      - name: Create lock flag based on migration type
+      steps:
+      - name: Set Organization Token
+        id: set_token
+        run: |
+          if [ "${{ github.event.inputs.organization }}" == "mgmri-dge" ]; then
+            echo "ORG_TOKEN=${{ secrets.ORG_TOKEN_A }}" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.organization }}" == "mgmri-commerce" ]; then
+            echo "ORG_TOKEN=${{ secrets.ORG_TOKEN_B }}" >> $GITHUB_ENV
+          else
+            echo "Invalid organization selected."
+            exit 1
+          fi
+ 
+      - name: Manage Issues
         env:
-            GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
-        uses: actions/github-script@v6
-        id: lock-flag
-        with:
-          result-encoding: string
-          script: |
-            if: ${{ steps.issue_body.outputs.locksourcerepo }} == 'yes'
-                return '${{ needs.prepare.outputs.migration-type }}' === 'Production' ? '--lock-source-repo' : ''
+          GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
+          ORG_TOKEN: ${{ secrets.SOURCE_ORG_TOKEN }}
+          #ORG_TOKEN: ${{ env.SOURCE_ORG_TOKEN }}
+        run: |
+          # Example command to create an issue or perform an action
+          echo "Using token for ${{ github.event.inputs.organization }}"
+          # Use ORG_TOKEN for your IssueOps actions here
+          # e.g., curl to create an issue
+          # curl -X POST -H "Authorization: token $SOURCE_ORG_TOKEN" \
+          #      -d '{"title": "New Issue", "body": "Issue created using configurable token."}' \
+          #      "https://api.github.com/repos/owner/repo/issues"
+      
+      
+      # - name: Create lock flag based on migration type
+      #   env:
+      #       GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
+      #   uses: actions/github-script@v6
+      #   id: lock-flag
+      #   with:
+      #     result-encoding: string
+      #     run: |
+      #      if: ${{ steps.issue_body.outputs.locksourcerepo }} == 'yes'
+      #           return '${{ needs.prepare.outputs.migration-type }}' === 'Production' ? '--lock-source-repo' : ''
 
       # - name: Lock Source Repository
       #   env:
