@@ -1,6 +1,6 @@
-name: "Adding Tokens to Multiple Organization while Migration"
+name: "Migration Locking Source org while migarting"
 description: "Provide the migration's source and target organization details"
-title: "Adding Tokens to Multiple Organization while Migration from {{source_org}} to {{target_org}}"
+title: "Migration Locking Source org while migarting"
 labels:
   - migration
   - secret scanning
