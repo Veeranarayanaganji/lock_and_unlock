@@ -65,10 +65,10 @@ jobs:
         with:
           result-encoding: string
           script: |
-            if [[ "${{ steps.issue_body.outputs.locksourcerepo }}"  == 'yes' ]]; then
-                return '${{ needs.prepare.outputs.migration-type }}' === 'Production' &&  "${{ steps.issue_body.outputs.locksourcerepo }}"  == 'yes' ? '--lock-source-repo' : ''
+            if [[ "${{ steps.issue_body.outputs.lock_source_repo }}"  == 'yes' ]]; then
+                return '${{ needs.prepare.outputs.migration-type }}' === 'Production'  ? '--lock-source-repo' : ''
                 echo "Migration locked"
-            else [[ "${{ steps.issue_body.outputs.locksourcerepo }}"  == 'no' ]]; then
+            else [[ "${{ steps.issue_body.outputs.lock_source_repo }}"  == 'no' ]]; then
                 return '${{ needs.prepare.outputs.migration-type }}' === 'Production' ? '' : ''
                 echo "Migration unlocked"
                 exit 1
