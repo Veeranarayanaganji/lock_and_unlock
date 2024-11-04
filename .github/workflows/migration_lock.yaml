@@ -66,7 +66,7 @@ jobs:
           result-encoding: string
           run: |
             if [[ "${{ steps.issue_body.outputs.locksourcerepo }}"  == 'yes' ]]; then
-                return '${{ needs.prepare.outputs.migration-type }}' === 'Production' ? '--lock-source-repo' : ''
+                return '${{ needs.prepare.outputs.migration-type }}' === 'Production' &&  "${{ steps.issue_body.outputs.locksourcerepo }}"  == 'yes' ? '--lock-source-repo' : ''
                 echo "Migration locked"
             else [[ "${{ steps.issue_body.outputs.locksourcerepo }}"  == 'no' ]]; then
                 return '${{ needs.prepare.outputs.migration-type }}' === 'Production' ? '' : ''
@@ -74,6 +74,19 @@ jobs:
                 exit 1
             fi
 
+            
+      # - name: Create lock flag based on migration type
+      #   env:
+      #       GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
+      #   uses: actions/github-script@v6
+      #   id: lock-flag
+      #   with:
+      #     result-encoding: string
+      #     run: |
+      #      if: ${{ steps.issue_body.outputs.locksourcerepo }} == 'yes'
+      #           return '${{ needs.prepare.outputs.migration-type }}' === 'Production' ? '--lock-source-repo' : ''
+
+    
       # - name: Lock Source Repository
       #   env:
       #       GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
