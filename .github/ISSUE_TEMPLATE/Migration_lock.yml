@@ -41,4 +41,13 @@ body:
       placeholder: "e.g., t_repo1"
     validations:
       required: true
+
+  - type: dropdown
+    id: lock_source_repo
+    attributes:
+      label: "Lock Source Repo"
+      description: Please select the Lock Repo for the Source repository after they have been migrated
+      options:
+        - 'Yes'
+        - 'No'
   
