@@ -64,7 +64,7 @@ jobs:
         id: lock-flag
         with:
           result-encoding: string
-          run: |
+          script: |
             if [[ "${{ steps.issue_body.outputs.locksourcerepo }}"  == 'yes' ]]; then
                 return '${{ needs.prepare.outputs.migration-type }}' === 'Production' &&  "${{ steps.issue_body.outputs.locksourcerepo }}"  == 'yes' ? '--lock-source-repo' : ''
                 echo "Migration locked"
